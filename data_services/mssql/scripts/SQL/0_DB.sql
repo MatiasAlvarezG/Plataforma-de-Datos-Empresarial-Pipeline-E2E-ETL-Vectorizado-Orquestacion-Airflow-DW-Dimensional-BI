@@ -1,0 +1,2 @@
+CREATE DATABASE proyecto_matias_alvarez;
+GO

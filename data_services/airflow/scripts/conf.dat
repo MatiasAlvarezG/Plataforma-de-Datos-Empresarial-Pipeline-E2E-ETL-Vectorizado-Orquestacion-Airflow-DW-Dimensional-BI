@@ -1,0 +1,13 @@
+############################################################################################################################
+# Archivo de configuración para gestionar Apache Airflow.                                                                  #
+# Dado que se instala los servicios usando docker compose up --build --no-start                                            #
+# Apache Airflow no puede configurar su base de datos en MySQL generando un error fatal.                                   #
+# Dado este problema se decide diseñar un Script (iniciar_airflow.sh) que sigue la siguiente lógica:                       #
+# 1) Si el contenedor esta realizando el proceso de creación entonces no se ejecuta Apache Airflow ni se configura.        #
+# 2) Si ya se instaló entonces se configura la base de datos en MySQL y las conexiones del proyecto.                       #
+# 3) Ejecuta Apache Airflow si se configuró.                                                                               #
+############################################################################################################################
+
+## Estado del contenedor -> Posibles valores: [CONFIGURAR, INICIAR_AIRFLOW]
+ESTADO_DEL_CONTENEDOR=CONFIGURAR
+

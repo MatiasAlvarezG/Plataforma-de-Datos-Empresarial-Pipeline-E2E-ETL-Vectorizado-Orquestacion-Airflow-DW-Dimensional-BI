@@ -1,0 +1,100 @@
+services:
+  ## Si no tiene SQL Server Management Studio instalado puede utilizar adminer para visualizar las tablas.
+  ## Tenga en cuenta que no fue incluido en el gestor, por lo que deberá iniciarlo con: docker start adminer_etl
+  # adminer_proyecto_matias_alvarez_etl_py-airflow-sql_server:
+  #   image: adminer
+  #   container_name: adminer_etl
+  #   hostname: adminer
+  #   ports:
+  #     - "10002:8080"  
+  #   restart: unless-stopped
+  #   networks:
+      # - net_airflow_sql_server_proyecto_matias_alvarez
+      # - net_airflow_mysql_proyecto_matias_alvarez
+
+  # MySQL [Metadata Airflow]
+  mysql_proyecto_matias_alvarez_etl_py-airflow-sql_server:
+    build:
+      context: .
+      dockerfile: dockerfiles/mysql/Dockerfile
+    container_name: mysql_proyecto_matias_alvarez
+    hostname: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=Mysql_p4ssw0rd2024
+    volumes:
+      - vol_mysql_proyecto_etl:/var/lib/mysql 
+    ports:
+      - "3306:3306"
+    networks:
+      - net_airflow_mysql_proyecto_matias_alvarez
+
+
+  # Apache Airflow
+  airflow_proyecto_matias_alvarez_etl_py-airflow-sql_server:
+    build:
+      context: .
+      dockerfile: dockerfiles/airflow/Dockerfile
+    hostname: airflow
+    container_name: airflow_proyecto_matias_alvarez
+    depends_on: 
+      - mysql_proyecto_matias_alvarez_etl_py-airflow-sql_server
+    environment:  
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://airflow_user:pass_word_airflow_db@mysql:3306/airflow_db
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/dags
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data_services/airflow/dags:/opt/airflow/dags
+      - ./data_services/airflow/logs:/opt/airflow/logs
+      - ./data_services/airflow/plugins:/opt/airflow/plugins
+    networks:
+      - net_airflow_sql_server_proyecto_matias_alvarez
+      - net_airflow_mysql_proyecto_matias_alvarez
+
+
+# SQL Server Express
+  sql_server_proyecto_matias_alvarez_etl_py-airflow-sql_server:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/mssql/Dockerfile
+    hostname: sql_server
+    container_name: sql_server_proyecto_matias_alvarez
+    ports:
+      - 1433:1433
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Sqlserver2024)
+      - MSSQL_PID=Express
+    volumes:
+      - ./data_services/mssql/dataset:/home/data
+      - ./data_services/mssql/scripts/SQL:/home/scripts
+      - sqlserver_data_proyecto_etl:/var/opt/mssql
+    networks:
+      - net_airflow_sql_server_proyecto_matias_alvarez
+      - net_sql_server_superset_proyecto_matias_alvarez
+
+
+ # Apache Superset
+  apache_superset_proyecto_matias_alvarez_etl_py-airflow-sql_server:
+    build:
+      context: .
+      dockerfile: dockerfiles/superset/Dockerfile
+    hostname: apache_superset
+    container_name: apache_superset_proyecto_matias_alvarez
+    ports:
+      - 9000:8088
+    networks:
+      - net_sql_server_superset_proyecto_matias_alvarez
+
+volumes:
+  sqlserver_data_proyecto_etl:
+  vol_mysql_proyecto_etl:
+
+networks:
+  net_sql_server_superset_proyecto_matias_alvarez:
+    driver: bridge
+  net_airflow_sql_server_proyecto_matias_alvarez:
+    driver: bridge
+  net_airflow_mysql_proyecto_matias_alvarez:
+    driver: bridge
